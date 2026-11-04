@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AssistTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#070C15</item>
+        <item name="android:colorAccent">#4DA3FF</item>
+        <item name="android:statusBarColor">#070C15</item>
+        <item name="android:navigationBarColor">#070C15</item>
+        <item name="android:textColorPrimary">#E9EFF7</item>
+    </style>
+</resources>

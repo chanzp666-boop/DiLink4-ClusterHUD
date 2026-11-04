@@ -1,0 +1,23 @@
+# 构建中间产物
+src/*/build/
+build/
+*.class
+*.dex
+
+# 车机导出配置与日志
+src/clusterlab_style.txt
+*.log
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*~
+
+# 私钥备份（仓库内只保留构建用的 debug 签名）
+*.jks.bak
+*.keystore
+
+# 历史遗留：Shizuku SDK 源码，两个包都已不再引用
+src/shizuku/
