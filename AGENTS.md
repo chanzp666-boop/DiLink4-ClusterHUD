@@ -3,7 +3,7 @@
 > 这是给**下一个 AI** 看的入口文件。读完这一页，你就知道：这是什么、代码在哪、怎么编译、怎么装车、哪些坑已经踩过。
 > 详细内容按需跳转：`docs/01-环境与工具.md` → `docs/02-代码结构.md` → `docs/03-迭代日志.md` → `docs/04-问题台账.md` → `docs/05-原始分析摘录.md`
 
-**版本**：v4.9.8（2026-11-03 15:52 · 自愈「没显示就重拉」轮询 3s；两个包 Ver.TAG 已对齐 v4.9.8）
+**版本**：v5.0（2026-11-04 · 新增 UID 2000 shell 看门狗层 + 自启链重排；两个包 Ver.TAG 已对齐 v5.0）
 **目标车机**：2023 款比亚迪汉 DM-i · DiLink 4.0 · 仪表屏 display 1（1920×720）
 **语言**：Java 8 / Android SDK 29（编译用 android-34 jar）· 纯手写 View 自绘，无 Gradle
 
@@ -15,8 +15,8 @@
 
 | APK | 包名 | 角色 |
 |---|---|---|
-| `ClusterHUD-1.0-v4.9.8.apk` | `com.byd.clusterlab` | 仪表屏透明自绘卡片：油耗/电耗/胎压 + 音乐封面歌词进度条 + 导航卡片识别 |
-| `ClusterAssist-1.0-v4.9.8.apk` | `com.byd.clusterassist` | 手机/车机上的控制面板：元素样式编辑器（颜色/字号/字重/描边/透明度）+ 守护进程 |
+| `ClusterHUD-1.0-v5.0.apk` | `com.byd.clusterlab` | 仪表屏透明自绘卡片：油耗/电耗/胎压 + 音乐封面歌词进度条 + 导航卡片识别 |
+| `ClusterAssist-1.0-v5.0.apk` | `com.byd.clusterassist` | 手机/车机上的控制面板：元素样式编辑器（颜色/字号/字重/描边/透明度）+ 守护进程 |
 
 关键事实：
 - **不改车机系统 App**，不替换 framework，不 hook 系统进程；纯第三方 APK。
@@ -43,7 +43,7 @@ cd ~/Desktop/DSH/仪表助理
 
 # 2) 装车（车机与 Mac 同一 WiFi，车机 IP 见 docs/01）
 adb connect 192.168.46.1:5555
-adb install -r apk/ClusterHUD-1.0-v4.9.8.apk
+adb install -r apk/ClusterHUD-1.0-v5.0.apk
 
 # 3) 看日志（所有关键路径都打了 TAG）
 adb logcat -s CLUSTERLAB:* CLUSTERLAB-NAV:* CLUSTERLAB-LYRIC:* CLUSTERLAB-BOOT:* CLUSTERLAB-KEEP:*
@@ -55,7 +55,7 @@ adb logcat -s YB_ADB:*
 
 ---
 
-## 三、当前状态（2026-11-03 15:52 · v4.9.8，两个包版本号已对齐）
+## 三、当前状态（2026-11-03 15:52 · v5.0，两个包版本号已对齐）
 
 | 功能 | 状态 | 备注 |
 |---|---|---|
@@ -65,20 +65,28 @@ adb logcat -s YB_ADB:*
 | 音乐封面 + 歌词（四级回退） | ✅ | `MediaListener` 通知监听 → `LyricLoader`（网易云→QQ→酷狗→酷我） |
 | 导航大卡/小卡自适应 | ✅ | `NavProbe` 像素判据 + 高德广播；进 3 退 4、切完锁 1.5s |
 | ADB 自授权（软件内） | 🟡 半自动 | 握手在 App 内完成；**首次仍需点一次系统「允许」**，或导入主机密钥（`/sdcard/clusterlab/adbkey.pk8` 三行） |
-| 程序自愈 | ✅ | `:keep` 独立前台进程 + adb 重拉；判据只认窗口 isVisible（心跳新鲜 ≠ 看得见）；实测关卡片 ~28s、被导航盖住 ~9s |
+| 程序自愈 | ✅ | 三层：`:keep` 前台进程 3s 查窗口可见性 → `am start --display 1`；shell 看门狗 5s 查进程与卡片；精确闹钟链兜底。判据只认窗口 isVisible（心跳新鲜 ≠ 看得见） |
 | 车机切投屏模式 | 🟡 | 只做一件事：窗口不可见连续两次（约 6 秒）→ `am start-activity --display 1` 重拉。不加布局判据、不搬任务栈 |
-| 开机自启 | ❌ | 车机熄火是休眠、`BOOT_COMPLETED` 永不到来；熄火后主进程被杀。现靠亮屏广播 + 15s 精确闹钟链，**点火即现未达成** |
+| 开机自启 | 🟡 已补齐第 5 层，待真机 | 熄火是整机 suspend、`BOOT_COMPLETED` 永不到来，应用内四层（广播/前台服务/闹钟/巡检）会被按 UID 一起清掉。新增 UID 2000 的 `/data/local/tmp/clusterlab-watchdog.sh` 常驻（5s 一轮），只被 suspend 冻结。**编写时车机离线，未实测** |
 | CPU 占用 | ✅ | 静止 3%、播放 21% |
 
 ## 四、下一步该干什么（按优先级）
 
-1. **验熄火后 `:keep` 是否存活**（当前唯一未知，决定"点火即现"能不能做到）。
+1. **上车验 v5.0 看门狗**（当前唯一未知，决定「点火即现」能不能做到）。
 ```bash
+   # 装完先确认看门狗起来了（看 ARGS，不是 COMM）
+   adb shell "cat /data/local/tmp/clusterlab-watchdog.pid"
+   adb shell "ps -A -o PID,ARGS | grep [c]lusterlab-watchdog"
+   adb shell "tail -20 /data/local/tmp/clusterlab-watchdog.log"
+
+   # 模拟被杀：关掉卡片界面，看门狗应在 5~10 秒内把它拉回来
+   adb shell "am broadcast -a com.byd.clusterlab.KILLCARD -n com.byd.clusterlab/.BootReceiver -f 0x20"
+
    # 熄火锁车 1 分钟以上，回车上点火，然后：
    adb shell "ps -A | grep clusterlab"          # 只剩 :keep → 白名单不是必需的
-   adb shell "ls -l /sdcard/clusterlab_card_beat.txt"
+   adb shell "tail -30 /data/local/tmp/clusterlab-watchdog.log"
 ```
-   两个都没了 → 车机整包清理，只剩「极速模式白名单」这一条（迪加也是靠用户手动加）。
+   进程和看门狗都没了 → 车机整包清理，只剩「极速模式白名单」这一条（迪加也是靠用户手动加）。
 2. **数据源现在是迪加单点**：迪加被停/被卸，卡片就只剩空值。要自给自足得先解决
    `BYDAUTO_*_GET` 的签名级权限（`04` #6，三条路已否决，别再重走）。
 3. **别恢复已删的东西**：`GetValProbe`/`TestActivity`/`Stat`/`YBDaemon`/`YBCore`/`YBByd`/`YBFeed`
@@ -113,10 +121,10 @@ adb logcat -s YB_ADB:*
 │   ├── 05-原始分析摘录.md      仪表投屏技术总结 / 哨兵项目的相关结论
 │   └── 06-交付清单.md          文件哈希、APK 校验、可复现步骤
 ├── src/
-│   ├── clusterlab/            主程序模块（com.byd.clusterlab，18 文件）
+│   ├── clusterlab/            主程序模块（com.byd.clusterlab，19 文件）
 │   │   ├── src/               ← 改这里
 │   │   ├── res/               styles.xml、xml/car_access.xml
-│   │   ├── assets/            car_top.png
+│   │   ├── assets/            car_top.png、app-watchdog.sh（UID 2000 看门狗）
 │   │   ├── AndroidManifest.xml
 │   │   └── build/             javac/aapt2 中间产物 + 最终 apk（不要手改）
 │   ├── assist/                面板模块（com.byd.clusterassist，15 文件，同构）

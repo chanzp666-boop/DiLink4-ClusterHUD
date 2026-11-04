@@ -16,7 +16,7 @@ DiLink 4.0（比亚迪汉 DM-i / 1920×720 仪表屏）上，全屏导航会占�
 | 四轮胎压 | 左前 / 右前 / 左后 / 右后，实时 kPa |
 | 歌词 | 通知监听 → MediaSession → 四级歌词源（网易云 / QQ / 酷狗 / 酷我），封面旋转 + 逐行高亮 |
 | 导航适配 | 识别仪表上的导航卡片，自动让位 / 切大卡小卡 |
-| 程序自愈 | 独立 `:keep` 进程每 3 秒查一次窗口是否可见，不可见就重拉，实测 3 秒回位 |
+| 程序自愈 | 三层：`:keep` 进程 3 秒查窗口可见性 / shell 看门狗 5 秒查进程与卡片 / 精确闹钟链兜底 |
 | 免 Shizuku 提权 | 自研 ADB 客户端在 App 内完成 AUTH 握手，拿 uid 2000 shell 后自己补权限 |
 
 ## 不刷机是怎么做到的
@@ -48,7 +48,7 @@ platform android-33/34）与 JDK 8。
 
 ```bash
 adb connect <车机IP>:5555
-adb install -r apk/ClusterHUD-1.0-v4.9.8.apk        # 仪表卡片
+adb install -r apk/ClusterHUD-1.0-v5.0.apk        # 仪表卡片
 adb install -r apk/ClusterAssist-1.0-v4.9.8.apk     # 控制面板（可选）
 ```
 
@@ -59,7 +59,7 @@ adb install -r apk/ClusterAssist-1.0-v4.9.8.apk     # 控制面板（可选）
 
 ```
 仪表助理/
-├── src/clusterlab/     主程序 com.byd.clusterlab（18 个 java 文件，仪表屏自绘）
+├── src/clusterlab/     主程序 com.byd.clusterlab（19 个 java 文件 + assets/app-watchdog.sh）
 ├── src/assist/         面板   com.byd.clusterassist（15 个 java 文件）
 ├── docs/               01 环境 / 02 代码结构 / 03 迭代日志 / 04 问题台账 / 06 交付清单 / 07 ADB 速查 / 08 ADB 复用
 ├── apk/                可直接安装的产物
@@ -71,8 +71,10 @@ adb install -r apk/ClusterAssist-1.0-v4.9.8.apk     # 控制面板（可选）
 
 ## 已知边界（先说清楚，省你时间）
 
-- **开机自启在这台车机上没做到**。DiLink 4.0 熄火是休眠，`BOOT_COMPLETED` 不会来；熄火后进程会被清理。
-  现在靠「亮屏广播 + 精确闹钟链」尽量早拉起，再配合车机「极速模式白名单」会更稳。
+- **开机自启靠五层，最后一层是 shell 看门狗**。DiLink 4.0 熄火是整机 suspend，`BOOT_COMPLETED` 不会来，
+  熄火后应用进程和被 ROM 按 UID 一起清掉的闹钟都没了。所以真正的兜底是装进 `/data/local/tmp` 的
+  UID 2000 看门狗脚本（5 秒一轮），它只被 suspend 冻结、不被按 UID 清理。再配合车机「极速模式白名单」更稳。
+  这一步需要 App 里已经拿到 shell —— 也就是下面那条 ADB 自授权。
 - **数据依赖迪加（com.van.diplus）**。第三方包拿不到 `BYDAUTO_*_GET` 签名级权限（实测 `pm grant` 报
   “not a changeable permission type”），只能走迪加本地 HTTP `127.0.0.1:8988`。迪加被停用，卡片就只剩空值。
 - 坐标按 1920×720 硬编码，换车型要改 `CardActivity` 里的常量。

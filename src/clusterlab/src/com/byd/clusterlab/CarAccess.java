@@ -20,7 +20,6 @@ public class CarAccess extends AccessibilityService {
     private static final String AMAP = "com.byd.automap";
 
     private static final Pattern REMAIN = Pattern.compile("剩余\\s*\\d+(\\.\\d+)?\\s*(公里|米|km|m)");
-    private static final Pattern ETA = Pattern.compile("\\d{1,2}:\\d{2}\\s*到|到达时间");
     // 高德投屏卡片上的转向指令："187米后"、"随后281米"
     private static final Pattern TURN = Pattern.compile("\\d+\\s*(米|公里)\\s*后|随后\\s*\\d+\\s*米");
 
@@ -80,7 +79,7 @@ public class CarAccess extends AccessibilityService {
         baselineTries++;
 
         if (!YBAdb.ready()) {
-            Dbg.e("CLUSTERLAB-A11Y", "Shizuku 未就绪，暂时无法拉起迪友");
+            Dbg.e("CLUSTERLAB-A11Y", "ADB 未就绪，暂时无法拉起迪友");
             return;
         }
         Dbg.e("CLUSTERLAB-A11Y", "还没建立迪友基线，拉前台抓一次（第 " + baselineTries + " 次）");

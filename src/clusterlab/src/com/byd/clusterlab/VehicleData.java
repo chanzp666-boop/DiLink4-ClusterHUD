@@ -516,18 +516,6 @@ public class VehicleData {
         }
     }
 
-    /** 直接读迪加参数；∞ / 负数 / 失败都返回 -1。 */
-    private static double diplusPHM(String name) {
-        try {
-            String body = http(HOST + "/api/getVal?name=" + URLEncoder.encode(name, "UTF-8"));
-            JSONObject o = new JSONObject(body);
-            if (!o.optBoolean("success", false)) return -1;
-            double v = Double.parseDouble(o.optString("val", "-1"));
-            return (Double.isFinite(v) && v >= 0) ? v : -1;
-        } catch (Throwable t) {
-            return -1;
-        }
-    }
 
     private static int val(String name) {
         try {
