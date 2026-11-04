@@ -8,6 +8,8 @@ DiLink 4.0（比亚迪汉 DM-i / 1920×720 仪表屏）上，全屏导航会占�
 
 ![仪表效果](preview/mock-mid-v2.png)
 
+**下载**：[Releases](https://github.com/chanzp666-boop/DiLink4-ClusterHUD/releases) 里直接拿 APK（`ClusterHUD` 装车机、`ClusterAssist` 装车机或手机）。
+
 ## 它做什么
 
 | 能力 | 说明 |
