@@ -6,9 +6,8 @@
 DiLink 4.0（比亚迪汉 DM-i / 1920×720 仪表屏）上，全屏导航会占满整个仪表，油耗、胎压、歌词全都看不到。
 本项目在仪表屏（`display 1`）上盖一层透明自绘卡片，把这几个信息一直显示在导航之上。
 
-![仪表效果]<img width="1358" height="485" alt="image" src="https://github.com/user-attachments/assets/ecd9c2dd-68b1-4eaf-949d-c1ee78956b08" />
+![仪表效果]
 <img width="1382" height="492" alt="image" src="https://github.com/user-attachments/assets/6a7229d3-5778-4954-97c2-94b083c9c42c" />
-<img width="1329" height="499" alt="image" src="https://github.com/user-attachments/assets/1d0a5f60-2aa4-4957-9006-2616a639c5a5" />
 
 
 **下载**：[Releases](https://github.com/chanzp666-boop/DiLink4-ClusterHUD/releases) 里直接拿 APK（`ClusterHUD` 装车机、`ClusterAssist` 装车机或手机）。
